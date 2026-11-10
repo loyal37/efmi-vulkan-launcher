@@ -22,6 +22,7 @@ Settings load_settings(const fs::path& data)
     if (j.is_object()) {
         s.game_path = j.value("game_path", std::string());
         s.efmi_path = j.value("efmi_path", std::string());
+        s.layer_path = j.value("layer_path", std::string());
         s.prefilled = j.value("prefilled", false);
     }
     return s;
@@ -29,8 +30,13 @@ Settings load_settings(const fs::path& data)
 
 bool save_settings(const fs::path& data, const Settings& s)
 {
-    const json j = {{"game_path", s.game_path}, {"efmi_path", s.efmi_path}, {"prefilled", s.prefilled}};
+    const json j = {{"game_path", s.game_path}, {"efmi_path", s.efmi_path}, {"layer_path", s.layer_path}, {"prefilled", s.prefilled}};
     return write_file(data / L"settings.json", j.dump(2, ' ', false, json::error_handler_t::replace) + "\n");
+}
+
+fs::path layer_dir(const Settings& settings)
+{
+    return settings.layer_path.empty() ? program_dir() / kLayerFolder : path_of(settings.layer_path);
 }
 
 bool game_folder_valid(const fs::path& folder)
@@ -145,17 +151,18 @@ bool prefill_from_xxmi(Settings& settings, const fs::path& config)
     return any;
 }
 
-json status(const fs::path& data)
+json launcher_status(const fs::path& data)
 {
     const Settings s = load_settings(data);
     const fs::path game = path_of(s.game_path), efmi = path_of(s.efmi_path);
     const bool game_ok = game_folder_valid(game), efmi_ok = efmi_folder_valid(efmi);
-    json layer = layer_state(efmi_ok ? efmi : fs::path());
+    json layer = layer_state(layer_dir(s));
     const bool ready = game_ok && efmi_ok && layer.value("installed", false);
     return {{"version", EFVL_VERSION},
             {"game_path", s.game_path},
             {"efmi_path", s.efmi_path},
             {"game_ok", game_ok},
+            {"layer_path", text_of(layer_dir(s))},
             {"efmi_ok", efmi_ok},
             {"layer", layer},
             {"ready", ready}};

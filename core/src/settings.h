@@ -10,6 +10,7 @@ inline constexpr wchar_t kGameExe[] = L"Endfield.exe";
 struct Settings {
     std::string game_path; // the folder that holds Endfield.exe
     std::string efmi_path; // the EFMI folder: Mods and Core\EFMI
+    std::string layer_path; // where EFMI Vulkan is installed; empty: EFMI-Vulkan beside the launcher
     bool prefilled = false; // the XXMI configuration was looked for once
 };
 
@@ -24,10 +25,13 @@ fs::path find_xxmi_config();
 // Fills the paths that are still empty from that file. False when it is missing or names neither.
 bool prefill_from_xxmi(Settings& settings, const fs::path& config);
 
+// The folder EFMI Vulkan is installed in: the setting, or its default.
+fs::path layer_dir(const Settings& settings);
+
 bool game_folder_valid(const fs::path& folder);
 bool efmi_folder_valid(const fs::path& folder);
 
 // Everything the interface shows: settings, whether each path is usable, the installed layer.
-json status(const fs::path& data);
+json launcher_status(const fs::path& data);
 
 } // namespace efvl

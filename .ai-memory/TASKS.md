@@ -9,14 +9,14 @@
 
 ## Waiting for the user
 
-- [ ] O-1: DX11 from this launcher too?
 - [ ] O-2: the official launcher's `Games.exe` as the game's parent, as XXMI does?
-- [ ] D-008: repository of the launcher's releases; is `loyal37/efmi-vulkan` public with releases?
+- [ ] D-008: which repository publishes the launcher itself?
 - [ ] The first real start of the game (the user's click, the user's account).
 
 ## Next
 
-- [ ] Automatic update of the launcher and of EFMI Vulkan, as XXMI's (user, 2026-11-11, D-008).
+- [ ] EFMI Vulkan from the network: latest release, download, check, install (D-008).
+- [ ] Automatic update of the launcher itself (D-008; needs its repository).
 
 ## Later milestones, not the first build
 

@@ -1,0 +1,19 @@
+# Build outputs
+dist/
+build/
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# Runtime output
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor and agent local state
+.claude/
+.vs/

@@ -3,7 +3,7 @@
     python scripts/check_text.py
 
 Every file git knows or would add is read as UTF-8; a Chinese character outside the strings file
-fails the check. A string that must hold one elsewhere (a test's folder name) is spelled with \u.
+fails the check. A string that must hold one elsewhere (a test's folder name) is spelled with an escape.
 """
 import re
 import subprocess
@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ALLOWED = {"ui/strings.zh-CN.json"}
 BINARY = {".png", ".ico", ".zip", ".exe", ".dll"}
-CJK = re.compile("[⺀-鿿豈-﫿＀-￯]")
+CJK = re.compile("[%s-%s%s-%s%s-%s]" % tuple(map(chr, (0x2E80, 0x9FFF, 0xF900, 0xFAFF, 0xFF00, 0xFFEF))))
 
 names = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=ROOT,
                        capture_output=True, text=True, encoding="utf-8").stdout.splitlines()

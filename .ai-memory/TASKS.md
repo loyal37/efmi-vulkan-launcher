@@ -2,10 +2,12 @@
 
 ## First build (0.1.0)
 
-- [ ] Core: start suspended, inject, resume; checked against the sandbox program.
-- [ ] Settings: EFMI path and game path saved and read back; first-run prefill from the XXMI configuration (read-only).
-- [ ] Install EFMI Vulkan from a local release archive; installed version shown; update.
-- [ ] Shell and main screen; shown to the user before anything spreads from it.
+- [x] Core: start suspended, inject, resume; checked against the sandbox program.
+- [x] Settings: EFMI path and game path saved and read back; first-run prefill from the XXMI configuration (read-only).
+- [x] Install EFMI Vulkan from a local release archive; installed version shown; update.
+- [x] Shell and main screen built and shown.
+- [ ] The user's word on the main screen.
+- [ ] A check that clicks the page's buttons (dialogs aside); the elevated path tried with a program that needs it.
 
 ## Waiting for the user
 

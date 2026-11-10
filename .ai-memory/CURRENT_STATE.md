@@ -1,14 +1,25 @@
 # EFMI Vulkan Launcher - Current development state
 
-## 2026-11-11: project started
+## 0.1.0 in work (2026-11-11): core and first screen; waiting for the user's word on the main screen
 
-- Repository initialised (branch main, no remote), working agreement and project memory written.
-- Read, nothing changed: how the layer enters the game and how its release is packed (`F:\efmi vulkan`), what XXMI does at a start (KNOWN_ISSUES F-001).
-- Nothing built yet.
+- **Builds**: `python scripts/build.py` makes `dist/efvl_core.exe`, `dist/EFMI Vulkan Launcher.exe` and `dist/ui/`.
+- **Sandbox** (`python tests/check_core.py`, 34 checks, all passing; the "game" is a copy of `efmi_vk_sandbox.exe` named Endfield.exe in a folder with Chinese characters, the layer the release archive 2.1.1, everything under `build/tests`):
+  - settings saved and read back; prefill from a stand-in XXMI configuration, that file unchanged;
+  - install from a local archive into the layer's folder (a setting): version shown, a cut archive, a path outside the folder, a missing DLL and a wrong `.sha256` refused with nothing written; an update keeps `settings\`; `m2_mods` of `efmi_vk.cfg` follows the EFMI path and every other line stays the package's; nothing written into the EFMI folder;
+  - start: created suspended, `efmi_vk_inject.dll` loaded, resumed. The layer's own log: loaded into the program with the inject entry, "the Vulkan loader is not loaded yet", then 108 of 144 exports redirected without "already loaded", the Mods folder of the settings used, the program rendered and ended with 0.
+- **Window**: renders the main screen and the settings drawer (`--screenshot`, pictures in `docs/preview/`). Shown to the user 2026-11-11; no answer yet.
+- `python scripts/check_text.py` passes.
 
-## 2026-11-11: core sources begun, nothing built (session cut short by the usage limit)
+### Not verified
 
-- Dependencies unpacked under `F:\vulkan`: `webview2-1.0.2903.40` (include and x64 static loader), `miniz-3.0.2`, `nlohmann-json-3.11.3\json.hpp`.
-- Written, never compiled: `core/src/util.*`, `launch.*` (suspended start, remote LoadLibraryW, resume), `settings.*` (settings, XXMI prefill through its shortcuts, status), `install.h` (interface only).
-- Missing: `core/src/install.cpp` (miniz, `.sha256` check, record `efvl-install.json`), `core/src/main.cpp` (command line, self-elevation on ERROR_ELEVATION_REQUIRED), `scripts/build.py`, `scripts/check_text.py`, the sandbox injection check (`tests/`), the shell, the page, the strings file.
-- Not verified: anything. No build, no sandbox run, no game.
+- **The real game: nothing.** No start, no injection, no elevation prompt. Whether the game accepts a plain start is open (DECISIONS O-2).
+- The elevated path of the core (`runas`, result file): written, never run (the sandbox needs no elevation).
+- The window's buttons (folder and file dialogs, install, start through `efvl_core.exe`): written, not clicked by a check or by hand.
+- The message for a missing WebView2 runtime: written, not seen (the runtime is installed here).
+- An EFMI path outside ASCII in the layer's `efmi_vk.cfg` (the launcher writes UTF-8; how the layer reads it was not checked). Whether release 2.0.9, the only one online, takes an absolute `m2_mods`.
+- `check_core.py` passed on its first run; it was not seen failing against a wrong core first.
+
+### Not done
+
+- EFMI Vulkan from the network and the launcher's own update (D-008).
+- The prefill finds the XXMI configuration through XXMI's shortcuts (`find_xxmi_config`); only the reading of a named file is checked.

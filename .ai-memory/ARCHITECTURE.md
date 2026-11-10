@@ -16,7 +16,11 @@ The layer reads `efmi_vk.cfg` from its own folder; `m2_mods = auto` takes the fi
 
 | Part | What |
 | --- | --- |
-| `core/src` | Library: `settings` (data folder, JSON), `xxmi` (prefill), `install` (archive, installed version), `launch` (suspended start, injection, resume, elevation). `main.cpp`: the command line `efvl_core.exe`. |
-| `shell/src` | The window: WebView2 host, the bridge between the page and the library, starts the core for a launch. |
-| `ui/` | The page. `strings.zh-CN.json` holds every Chinese text, for the page and for the shell's native dialogs. |
-| `scripts/`, `tests/` | Build, checks. |
+| `core/src/launch.*` | `launch()`: CreateProcessW suspended, per DLL a remote thread running LoadLibraryW, ResumeThread; any failure ends the process that never ran. `process_running()`. |
+| `core/src/settings.*` | `data\settings.json` (`game_path`, `efmi_path`, `layer_path`, `prefilled`), the XXMI prefill, `launcher_status()` (what the page shows). |
+| `core/src/install.*` | The archive read whole in memory (miniz), checked, then written; the install record `efvl-install.json` (version from the archive's name); `set_layer_mods()` writes `m2_mods`. |
+| `core/src/actions.*` | What the command line and the window both call: prefill, set paths, install, start. Every answer is JSON with `ok` and `code`. |
+| `core/src/main.cpp` | `efvl_core.exe`. Starts itself elevated when the program needs it; the elevated copy answers through `--result`. |
+| `shell/src/main.cpp` | The window: WebView2 on the virtual host `efvl.example` mapped to `ui\`, requests `{id, cmd}` from the page (`state`, `browse`, `install_file`, `start`), native folder and file dialogs, `--screenshot`. A start runs `efvl_core.exe start` hidden. |
+| `ui/` | `index.html`, `app.css`, `app.js`; `strings.zh-CN.json` holds every Chinese text, error messages by code, and the shell's native message. |
+| `scripts/build.py`, `scripts/check_text.py`, `tests/check_core.py` | Build and checks. |

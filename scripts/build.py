@@ -19,7 +19,7 @@ DIST = os.path.join(ROOT, "dist")
 OBJ = os.path.join(ROOT, "build", "obj")
 SHELL_EXE = "EFMI Vulkan Launcher.exe"
 CORE_EXE = "efvl_core.exe"
-CORE_SOURCES = ["util.cpp", "launch.cpp", "settings.cpp", "install.cpp", "actions.cpp"]
+CORE_SOURCES = ["util.cpp", "launch.cpp", "settings.cpp", "install.cpp", "actions.cpp", "update.cpp"]
 COMMON = ["/nologo", "/std:c++17", "/EHsc", "/W4", "/O2", "/MT", "/utf-8", "/DUNICODE", "/D_UNICODE",
           "/D_CRT_SECURE_NO_WARNINGS", "/Zi", "/wd4132", "/wd4127"]
 
@@ -71,7 +71,7 @@ def build_core(vcvars: str) -> str:
                              os.path.join("core", "src", "main.cpp")] + core_inputs() +
            ["/Fe:" + out, "/link", "/NOLOGO", "/DEBUG", "/PDB:" + obj + "efvl_core.pdb", "/SUBSYSTEM:CONSOLE",
             "/MANIFESTUAC:level='asInvoker' uiAccess='false'",
-            "bcrypt.lib", "shell32.lib", "ole32.lib", "advapi32.lib", "psapi.lib", "uuid.lib"])
+            "winhttp.lib", "bcrypt.lib", "shell32.lib", "ole32.lib", "advapi32.lib", "psapi.lib", "uuid.lib"])
     return out
 
 
@@ -85,7 +85,7 @@ def build_shell(vcvars: str) -> str:
            ["/Fe:" + out, "/link", "/NOLOGO", "/DEBUG", "/PDB:" + obj + "efvl_shell.pdb", "/SUBSYSTEM:WINDOWS",
             "/MANIFESTUAC:level='asInvoker' uiAccess='false'",
             os.path.join(WEBVIEW2, "x64", "WebView2LoaderStatic.lib"),
-            "bcrypt.lib", "shell32.lib", "ole32.lib", "oleaut32.lib", "advapi32.lib", "psapi.lib", "uuid.lib",
+            "winhttp.lib", "bcrypt.lib", "shell32.lib", "ole32.lib", "oleaut32.lib", "advapi32.lib", "psapi.lib", "uuid.lib",
             "user32.lib", "gdi32.lib", "dwmapi.lib", "shlwapi.lib", "version.lib", "comdlg32.lib"])
     ui = os.path.join(DIST, "ui")
     if os.path.isdir(ui):

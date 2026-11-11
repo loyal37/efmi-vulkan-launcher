@@ -5,6 +5,8 @@
 //   efvl_core prefill  [--data DIR] [--xxmi-config FILE]
 //   efvl_core set      [--data DIR] [--game DIR] [--efmi DIR] [--layer DIR]
 //   efvl_core install  [--data DIR] --archive FILE
+//   efvl_core check-update [--data DIR] [--api URL]
+//   efvl_core update   [--data DIR] [--api URL]
 //   efvl_core start    [--data DIR] [--wait] [--result FILE] [--no-elevate]
 //   efvl_core launch   --exe FILE --dll FILE [--dll FILE] [--cwd DIR] [--args TEXT] [--env NAME=VALUE]
 //                      [--wait] [--result FILE] [--no-elevate]
@@ -17,6 +19,7 @@
 #include "install.h"
 #include "launch.h"
 #include "settings.h"
+#include "update.h"
 
 #include <shellapi.h>
 
@@ -33,6 +36,7 @@ struct Args {
     fs::path data, xxmi_config, archive, result, exe, cwd;
     std::vector<fs::path> dlls;
     std::wstring args;
+    std::string api;
     std::vector<std::pair<std::wstring, std::wstring>> env;
     json paths = json::object();
     bool wait = false, no_elevate = false, elevated = false, bad = false;
@@ -61,6 +65,7 @@ Args parse(int argc, wchar_t** argv)
         else if (key == L"--exe") a.exe = value();
         else if (key == L"--cwd") a.cwd = value();
         else if (key == L"--dll") a.dlls.push_back(value());
+        else if (key == L"--api") a.api = narrow(value());
         else if (key == L"--args") a.args = value();
         else if (key == L"--game") a.paths["game_path"] = narrow(value());
         else if (key == L"--efmi") a.paths["efmi_path"] = narrow(value());
@@ -141,6 +146,10 @@ int wmain(int argc, wchar_t** argv)
             answer = action_set_paths(data, a.paths);
         else if (a.command == L"install")
             answer = action_install(data, a.archive);
+        else if (a.command == L"check-update")
+            answer = action_check_update(data, a.api);
+        else if (a.command == L"update")
+            answer = action_update(data, a.api);
         else if (a.command == L"start")
             answer = action_start(data, a.wait, a.args, a.env);
         else if (a.command == L"launch") {

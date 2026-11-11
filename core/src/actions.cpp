@@ -4,6 +4,8 @@
 #include "launch.h"
 #include "settings.h"
 
+#include <cstdio>
+
 namespace efvl {
 
 namespace {
@@ -14,6 +16,23 @@ json fail(const char* code)
 }
 
 // The layer's configuration follows the EFMI path whenever either changes.
+// One line per start in data\launcher.log: when, what was started with which DLL, how it ended.
+void log_start(const fs::path& data, const LaunchRequest& request, const json& answer)
+{
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    char stamp[64];
+    snprintf(stamp, sizeof(stamp), "%04u-%02u-%02u %02u:%02u:%02u", now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute,
+             now.wSecond);
+    std::string text;
+    read_file(data / L"launcher.log", text);
+    if (text.size() > (1u << 20))
+        text.erase(0, text.size() - (1u << 19));
+    text += std::string(stamp) + " start " + text_of(request.exe) + " with " +
+            (request.dlls.empty() ? std::string("no DLL") : text_of(request.dlls.front())) + ": " + dump(answer) + "\n";
+    write_file(data / L"launcher.log", text);
+}
+
 void sync_layer(const Settings& s)
 {
     const fs::path efmi = path_of(s.efmi_path);
@@ -65,7 +84,7 @@ json action_install(const fs::path& data, const fs::path& archive, const std::st
 }
 
 json action_start(const fs::path& data, bool wait, const std::wstring& args,
-                  const std::vector<std::pair<std::wstring, std::wstring>>& env)
+                  const std::vector<std::pair<std::wstring, std::wstring>>& env, DWORD settle_ms)
 {
     const Settings s = load_settings(data);
     const fs::path game = path_of(s.game_path), efmi = path_of(s.efmi_path), layer = layer_dir(s);
@@ -87,7 +106,10 @@ json action_start(const fs::path& data, bool wait, const std::wstring& args,
     request.args = args;
     request.env = env;
     request.wait = wait;
-    return launch(request).to_json();
+    request.settle_ms = settle_ms;
+    const json answer = launch(request).to_json();
+    log_start(data, request, answer);
+    return answer;
 }
 
 } // namespace efvl

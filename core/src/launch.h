@@ -20,11 +20,14 @@ struct LaunchRequest {
     // Variables set for the child only (an empty value removes one). The checks use it; the game gets none.
     std::vector<std::pair<std::wstring, std::wstring>> env;
     bool wait = false;            // wait for the program to end and report its exit code
+    // After the resume the program is watched this long: one that ends within it did not start
+    // (a game that refuses the way it was started ends at once). Not used with `wait`.
+    DWORD settle_ms = 0;
 };
 
 struct LaunchResult {
     // ok, exe_not_found, dll_not_found, elevation_required, create_failed, wrong_architecture,
-    // inject_failed, resume_failed
+    // inject_failed, resume_failed, exited_early
     std::string code = "ok";
     DWORD error = 0;              // GetLastError of the failing call
     std::string detail;           // which call or which DLL

@@ -192,7 +192,8 @@ LaunchResult launch(const LaunchRequest& request)
     startup.cb = sizeof(startup);
     PROCESS_INFORMATION process = {};
     if (!CreateProcessW(request.exe.c_str(), &command[0], nullptr, nullptr, FALSE,
-                        CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT, env.empty() ? nullptr : env.data(), cwd.c_str(),
+                        // No console shared with the core: its one line of JSON stays alone on its output.
+                        CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | DETACHED_PROCESS, env.empty() ? nullptr : env.data(), cwd.c_str(),
                         &startup, &process)) {
         result.error = GetLastError();
         result.code = result.error == ERROR_ELEVATION_REQUIRED ? "elevation_required" : "create_failed";
@@ -227,6 +228,9 @@ LaunchResult launch(const LaunchRequest& request)
     if (request.wait) {
         WaitForSingleObject(process.hProcess, INFINITE);
         result.exited = GetExitCodeProcess(process.hProcess, &result.exit_code) != 0;
+    } else if (request.settle_ms && WaitForSingleObject(process.hProcess, request.settle_ms) == WAIT_OBJECT_0) {
+        result.exited = GetExitCodeProcess(process.hProcess, &result.exit_code) != 0;
+        result.code = "exited_early";
     }
     CloseHandle(process.hThread);
     CloseHandle(process.hProcess);

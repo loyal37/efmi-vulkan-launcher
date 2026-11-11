@@ -17,9 +17,10 @@ json action_set_paths(const fs::path& data, const json& paths);
 // Installs a local archive into the layer's folder.
 json action_install(const fs::path& data, const fs::path& archive, const std::string& source = "local");
 // Starts the game with the layer loaded. Codes beside launch()'s: game_not_set, efmi_not_set,
-// layer_not_installed, game_running. `args` are appended to the game's command line; `env` sets
+// layer_not_installed, game_running. The game is watched for `settle_ms` after it runs: one that
+// ends within it is exited_early. Each start is written to launcher.log in the data folder. `args` are appended to the game's command line; `env` sets
 // variables for the game's process only (the checks use both, the window neither).
 json action_start(const fs::path& data, bool wait, const std::wstring& args = std::wstring(),
-                  const std::vector<std::pair<std::wstring, std::wstring>>& env = {});
+                  const std::vector<std::pair<std::wstring, std::wstring>>& env = {}, DWORD settle_ms = 5000);
 
 } // namespace efvl

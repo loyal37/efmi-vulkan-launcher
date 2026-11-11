@@ -7,7 +7,7 @@
 //   efvl_core install  [--data DIR] --archive FILE
 //   efvl_core check-update [--data DIR] [--api URL]
 //   efvl_core update   [--data DIR] [--api URL]
-//   efvl_core start    [--data DIR] [--wait] [--result FILE] [--no-elevate]
+//   efvl_core start    [--data DIR] [--wait] [--settle MS] [--result FILE] [--no-elevate]
 //   efvl_core launch   --exe FILE --dll FILE [--dll FILE] [--cwd DIR] [--args TEXT] [--env NAME=VALUE]
 //                      [--wait] [--result FILE] [--no-elevate]
 //   efvl_core version
@@ -37,6 +37,7 @@ struct Args {
     std::vector<fs::path> dlls;
     std::wstring args;
     std::string api;
+    DWORD settle = 5000;
     std::vector<std::pair<std::wstring, std::wstring>> env;
     json paths = json::object();
     bool wait = false, no_elevate = false, elevated = false, bad = false;
@@ -78,6 +79,7 @@ Args parse(int argc, wchar_t** argv)
             else
                 a.env.emplace_back(pair.substr(0, eq), pair.substr(eq + 1));
         }
+        else if (key == L"--settle") a.settle = static_cast<DWORD>(_wtoi(value().c_str()));
         else if (key == L"--wait") a.wait = true;
         else if (key == L"--no-elevate") a.no_elevate = true;
         else if (key == L"--elevated") a.elevated = true;
@@ -151,7 +153,7 @@ int wmain(int argc, wchar_t** argv)
         else if (a.command == L"update")
             answer = action_update(data, a.api);
         else if (a.command == L"start")
-            answer = action_start(data, a.wait, a.args, a.env);
+            answer = action_start(data, a.wait, a.args, a.env, a.settle);
         else if (a.command == L"launch") {
             LaunchRequest request;
             request.exe = a.exe;

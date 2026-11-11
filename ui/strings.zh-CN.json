@@ -44,6 +44,7 @@
     "settings_write_failed": "无法保存设置",
     "network_failed": "网络连接失败",
     "release_invalid": "未找到可用版本",
+    "exited_early": "游戏启动后立即退出",
     "unknown": "出错了"
   }
 }

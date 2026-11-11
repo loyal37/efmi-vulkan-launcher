@@ -13,3 +13,4 @@
 - The user accepted the main screen. Network install and update built (`core/src/update.*`, `tests/check_update.py` 23/23 after failing), tried once against GitHub (v2.0.9, sandbox). The window got the update button and a script hook for checks (`tests/check_ui.py` 16/16).
 - The user: push the launcher to a public repository; asked whether the official launcher's wallpaper can be had (not a local file; open).
 - The user: injection first, wallpaper and releases set aside; then "do it XXMI's way" for the parent (D-011). Built: early exit, launcher.log, the Games.exe parent, the official launcher's folder as a setting; `tests/check_inject.py` 20/20, the other three checks passing again (35, 23, 16). Read-only prefill on this machine found all three folders.
+- The user's first real start: the game refused it (F-003). Stopped; no work on getting past the game's check.

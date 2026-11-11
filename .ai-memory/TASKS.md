@@ -14,7 +14,7 @@
 ## Waiting for the user
 
 - [ ] Background: the official launcher's wallpaper is fetched by it from Hypergryph's servers, not kept as a file here. Fetch it the same way at run time, or let the user choose a picture? Never shipped in the repository.
-- [ ] The first real start of the game (the user's click, the user's account).
+- [x] The first real start of the game (2026-11-11): refused by the game (KNOWN_ISSUES F-003). Stopped.
 
 ## Next
 

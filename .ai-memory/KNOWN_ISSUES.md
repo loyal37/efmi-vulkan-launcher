@@ -12,3 +12,9 @@
 ## F-002 The game (2026-11-11, read from the files)
 
 `Endfield.exe` is x64 with a `requireAdministrator` manifest; the folder holds `AntiCheatExpert` and `ACE-ADVT.sys`.
+
+## F-003 The game refuses the launcher's start (2026-11-11, the user's first real start)
+
+- The user started the game from the launcher. The core elevated itself, created `Games.exe` suspended as the parent and loaded EFMI Vulkan 2.0.9 into `Endfield.exe` before the Vulkan loader (`dist\data\launcher.log`, `dist\EFMI-Vulkan\efmi_vk_layer.log`).
+- The game then showed "Game start failed: please open the game through the official launcher".
+- Stopped here per AGENTS.md: the game blocks this way of starting it, and nothing is done to get past its check. The user says a recent XXMI update handles it; that is not taken over.

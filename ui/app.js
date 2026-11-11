@@ -30,6 +30,7 @@
 
   function standIn(cmd) {
     if (cmd === "start") return { ok: true };
+    if (cmd === "check_update") return { ok: true, available: false };
     return {
       ok: true, version: "0.1.0", ready: true, game_ok: true, efmi_ok: true,
       game_path: "D:\\Games\\EndField Game", efmi_path: "D:\\XXMI\\EFMI", layer_path: "D:\\Launcher\\EFMI-Vulkan",
@@ -38,9 +39,11 @@
   }
 
   let toastTimer = 0;
-  function toast(code) {
+  let latest = ""; // a newer release found online, or ""
+  const failed = (code) => strings.errors[code] || strings.errors.unknown;
+  function toast(message) {
     const el = $("toast");
-    el.textContent = strings.errors[code] || strings.errors.unknown;
+    el.textContent = message;
     el.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
@@ -68,7 +71,7 @@
     const label = $("layer-state");
     label.textContent = layer.installed ? (layer.version || t("installed")) : t("not_installed");
     label.className = "state" + (layer.installed ? "" : " empty");
-    $("install").textContent = layer.installed ? t("update") : t("install");
+    $("install").textContent = !layer.installed ? t("install") : latest ? t("update_to") + " " + latest : t("update");
   }
 
   function take(answer) {
@@ -92,13 +95,18 @@
     row.querySelector(".field .ghost").addEventListener("click", async () => take(await ask("browse", { key: row.dataset.key })));
   });
 
-  $("install").addEventListener("click", async () => {
-    $("install").classList.add("busy");
-    const answer = await ask("install_file");
-    $("install").classList.remove("busy");
+  async function install(cmd) {
+    const buttons = [$("install"), $("file")];
+    buttons.forEach((b) => b.classList.add("busy"));
+    const answer = await ask(cmd);
+    buttons.forEach((b) => b.classList.remove("busy"));
+    if (answer.ok && answer.code !== "up_to_date" && !answer.cancelled) latest = "";
     take(answer);
-    if (!answer.ok && !answer.cancelled) toast(answer.code);
-  });
+    if (answer.cancelled) return;
+    toast(!answer.ok ? failed(answer.code) : answer.code === "up_to_date" ? t("up_to_date") : t("done"));
+  }
+  $("install").addEventListener("click", () => install("update"));
+  $("file").addEventListener("click", () => install("install_file"));
 
   $("start").addEventListener("click", async () => {
     if (!state.ready) { open(true); return; }
@@ -106,7 +114,7 @@
     button.classList.add("busy");
     $("start-text").textContent = t("starting");
     const answer = await ask("start");
-    if (!answer.ok) toast(answer.code);
+    if (!answer.ok) toast(failed(answer.code));
     // A moment longer after a good start, so that a second click does not start the game twice.
     setTimeout(() => {
       button.classList.remove("busy");
@@ -115,6 +123,13 @@
   });
 
   take(await ask("state"));
+  // Quietly: a newer release only changes the update button's words.
+  ask("check_update").then((answer) => {
+    if (answer.ok && answer.available && state.layer && state.layer.installed) {
+      latest = answer.latest;
+      render();
+    }
+  });
   if (location.hash === "#settings") {
     document.body.classList.add("instant");
     open(true);

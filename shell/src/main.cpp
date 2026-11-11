@@ -3,15 +3,18 @@
 // the game needs it.
 //
 //   "EFMI Vulkan Launcher.exe" [--data DIR] [--dev] [--page NAME] [--no-activate]
-//                              [--screenshot FILE]
+//                              [--screenshot FILE] [--eval FILE --eval-out FILE]
 //
 // --page opens the page at a named view (the checks and screenshots use it). --no-activate shows
 // the window on the secondary screen without taking the focus. --screenshot writes the rendered
-// page as a PNG and ends.
+// page as a PNG and ends. --eval runs a script of a check in the page once it has loaded; the
+// script ends the program by posting {cmd: "test_done", result}, which is written to --eval-out.
+// EFVL_RELEASE_API names another address for the release lookup (the checks' stand-in server).
 #include "actions.h"
 #include "install.h"
 #include "launch.h"
 #include "settings.h"
+#include "update.h"
 
 #include <objbase.h>
 #include <ole2.h>
@@ -35,12 +38,14 @@ namespace {
 const wchar_t kHost[] = L"efvl.example";
 const UINT kReply = WM_APP + 1;   // lParam: a std::wstring* with the JSON for the page
 const UINT kCapture = WM_APP + 2;
+const UINT kEval = WM_APP + 3;
 const int kWidth = 1000, kHeight = 600; // the page's size at 100 %
 const COLORREF kBackground = RGB(0x0f, 0x11, 0x15);
 
 struct App {
     HWND window = nullptr;
-    fs::path data, screenshot;
+    fs::path data, screenshot, eval, eval_out;
+    std::string api;
     std::wstring page;
     bool dev = false, no_activate = false;
     json strings;
@@ -149,6 +154,22 @@ void handle(const json& request)
             answer["ok"] = done.value("ok", false);
             answer["code"] = done.value("code", std::string());
         }
+    } else if (cmd == "check_update" || cmd == "update") {
+        // The network is asked off the window's thread.
+        std::thread([id, cmd] {
+            const json done = cmd == "update" ? action_update(g.data, g.api) : action_check_update(g.data, g.api);
+            json answer = state();
+            for (const char* key : {"ok", "code", "latest", "available"})
+                if (done.contains(key))
+                    answer[key] = done[key];
+            answer["id"] = id;
+            reply(answer);
+        }).detach();
+        return;
+    } else if (cmd == "test_done" && !g.eval_out.empty()) {
+        write_file(g.eval_out, dump(request.contains("result") ? request["result"] : json()) + "\n");
+        PostMessageW(g.window, WM_CLOSE, 0, 0);
+        return;
     } else if (cmd == "start") {
         std::thread([id] {
             json done = run_core_start();
@@ -241,6 +262,14 @@ void on_view(ICoreWebView2Controller* controller)
                 return S_OK;
             }).Get(),
         nullptr);
+    if (!g.eval.empty())
+        g.view->add_NavigationCompleted(
+            Callback<ICoreWebView2NavigationCompletedEventHandler>(
+                [](ICoreWebView2*, ICoreWebView2NavigationCompletedEventArgs*) -> HRESULT {
+                    SetTimer(g.window, kEval, 800, nullptr);
+                    return S_OK;
+                }).Get(),
+            nullptr);
     if (!g.screenshot.empty())
         g.view->add_NavigationCompleted(
             Callback<ICoreWebView2NavigationCompletedEventHandler>(
@@ -276,6 +305,11 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lp
         if (wparam == kCapture) {
             KillTimer(window, kCapture);
             capture();
+        } else if (wparam == kEval) {
+            KillTimer(window, kEval);
+            std::string script;
+            if (g.view && read_file(g.eval, script))
+                g.view->ExecuteScript(widen(script).c_str(), nullptr);
         }
         return 0;
     case kReply: {
@@ -382,9 +416,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int)
         else if (key == L"--data" && i + 1 < argc) named = argv[++i];
         else if (key == L"--page" && i + 1 < argc) g.page = argv[++i];
         else if (key == L"--screenshot" && i + 1 < argc) g.screenshot = argv[++i];
+        else if (key == L"--eval" && i + 1 < argc) g.eval = argv[++i];
+        else if (key == L"--eval-out" && i + 1 < argc) g.eval_out = argv[++i];
     }
-    if (!g.screenshot.empty())
+    if (!g.screenshot.empty() || !g.eval.empty())
         g.no_activate = true;
+    const DWORD api = GetEnvironmentVariableW(L"EFVL_RELEASE_API", env, 32768);
+    if (api > 0 && api < 32768)
+        g.api = narrow(std::wstring(env, api));
     g.data = data_dir(named);
     g.strings = read_json(program_dir() / L"ui" / L"strings.zh-CN.json");
 

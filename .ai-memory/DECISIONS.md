@@ -30,7 +30,7 @@ Under `F:\vulkan`: the WebView2 SDK (NuGet `Microsoft.Web.WebView2`, static load
 
 ## D-008 Updates over the network (user, 2026-11-11)
 
-- The user: the launcher updates itself automatically as XXMI does. Open: which repository publishes the launcher.
+- The user: the launcher updates itself automatically as XXMI does. The user, 2026-11-11: "push the launcher to a public GitHub repository yourself": `loyal37/efmi-vulkan-launcher`, public, GPL-3.0 as the layer (the agent's choice of name and licence).
 - The user: "yes, update over the network" for EFMI Vulkan. Both sources: the network and a local archive. `loyal37/efmi-vulkan` is public (no token); releases are tag `v<version>` with the asset `EFMI-Vulkan-<version>.zip`; the latest through `https://api.github.com/repos/loyal37/efmi-vulkan/releases/latest`.
 - The user: no new release is published while the layer is in development, so GitHub stays at v2.0.9 (2.1.0 to 2.1.2 exist as local archives only). "No newer version" is the normal answer; on the user's machine the usual source is a local archive.
 - Download only: nothing is uploaded, a request carries no user name or path, the User-Agent is a generic program name. Versions compare as three single digits. A download is checked (a whole archive that holds `efmi_vk_inject.dll`) before installed files are replaced; nothing is replaced while the game runs. Without network the message is short and the local archive still works. Checks never use the real network (a local stand-in server).

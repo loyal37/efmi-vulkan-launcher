@@ -10,3 +10,5 @@
 - Core built: launch, settings, prefill, install, actions, command line. `tests/check_core.py` 34/34 in the sandbox. Commit a8c606f.
 - Window and page built, screenshots sent to the user. Commits 303b7d7, 0a8d2ea.
 - Open at the end: the user's word on the main screen, O-2, network install and update.
+- The user accepted the main screen. Network install and update built (`core/src/update.*`, `tests/check_update.py` 23/23 after failing), tried once against GitHub (v2.0.9, sandbox). The window got the update button and a script hook for checks (`tests/check_ui.py` 16/16).
+- The user: push the launcher to a public repository; asked whether the official launcher's wallpaper can be had (not a local file; open).

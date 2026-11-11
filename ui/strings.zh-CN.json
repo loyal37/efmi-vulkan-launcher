@@ -16,6 +16,11 @@
   "installed": "已安装",
   "close": "关闭",
   "webview_missing": "缺少 Microsoft Edge WebView2 运行库，界面无法显示。\n\n安装运行库后重新打开；也可以直接运行 efvl_core.exe start 启动游戏。",
+  "from_file": "本地包",
+  "update_to": "更新到",
+  "working": "处理中",
+  "up_to_date": "已是最新",
+  "done": "已完成",
   "errors": {
     "game_not_set": "请先选择游戏文件夹",
     "efmi_not_set": "请先选择 EFMI 文件夹",
@@ -37,6 +42,8 @@
     "in_use": "文件被占用，请先关闭游戏",
     "write_failed": "无法写入安装文件夹",
     "settings_write_failed": "无法保存设置",
+    "network_failed": "网络连接失败",
+    "release_invalid": "未找到可用版本",
     "unknown": "出错了"
   }
 }

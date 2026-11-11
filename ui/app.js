@@ -34,6 +34,7 @@
     return {
       ok: true, version: "0.1.0", ready: true, game_ok: true, efmi_ok: true,
       game_path: "D:\\Games\\EndField Game", efmi_path: "D:\\XXMI\\EFMI", layer_path: "D:\\Launcher\\EFMI-Vulkan",
+      launcher_path: "D:\\Hypergryph Launcher", launcher_ok: true, launcher_needed: true,
       layer: { installed: true, version: "2.1.1" },
     };
   }
@@ -66,6 +67,8 @@
     $("start-text").textContent = state.ready ? t("start") : t("setup");
     $("start").classList.toggle("quiet", !state.ready);
     showPath("game_path", state.game_ok);
+    showPath("launcher_path", state.launcher_ok);
+    document.querySelector('.row[data-key="launcher_path"]').hidden = state.launcher_needed === false;
     showPath("efmi_path", state.efmi_ok);
     showPath("layer_path", true);
     const label = $("layer-state");

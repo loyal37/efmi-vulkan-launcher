@@ -72,7 +72,17 @@ game.mkdir(parents=True)
 shutil.copytree(INSTALLED_CORE, efmi / "Core" / "EFMI")
 exe = game / "Endfield.exe"
 shutil.copy2(SANDBOX, exe)
+
+# The official launcher's stand-in: a version folder with a Games.exe that is never run.
+official = work / "official"
+(official / "1.9.0").mkdir(parents=True)
+(official / "1.10.0").mkdir()
+for version in ("1.9.0", "1.10.0"):
+    shutil.copy2(Path(os.environ["SystemRoot"]) / "System32" / "where.exe", official / version / "Games.exe")
 core("set", "--data", data, "--game", game, "--efmi", efmi, "--layer", layer)
+answer = core("start", "--data", data, "--no-elevate")
+check(answer.get("code") == "launcher_not_set", "no start without the official launcher's folder", answer)
+core("set", "--data", data, "--official", official)
 answer = core("install", "--data", data, "--archive", ARCHIVE)
 check(answer.get("ok"), "the layer installs into a folder named outside ASCII", answer)
 dll = layer / "efmi_vk_inject.dll"
@@ -96,6 +106,16 @@ started = time.monotonic()
 answer = core("start", "--data", data, "--no-elevate", "--settle", "3000", "--args", "--seconds 20", *quiet)
 check(answer.get("code") == "ok" and 2.5 < time.monotonic() - started, "a program that keeps running is a good start", answer)
 check(running(game) == 1, "and it is running")
+# The game is the child of the official launcher's Games.exe (the newest version's), as XXMI starts it,
+# and that process, never resumed, is gone once the game shows its window.
+parent = subprocess.run(["powershell", "-NoProfile", "-Command",
+                         "(Get-CimInstance Win32_Process -Filter 'ProcessId=%d').ParentProcessId" % answer.get("pid", 0)],
+                        capture_output=True, text=True).stdout.strip()
+check(answer.get("parent_pid") and parent == str(answer.get("parent_pid")), "the program's parent is the Games.exe the core started", (parent, answer))
+check(running(official) == 0, "no Games.exe is left behind")
+steam = work / "steamapps" / "common" / "EndField Game"
+steam.mkdir(parents=True)
+shutil.copy2(SANDBOX, steam / "Endfield.exe")
 answer = core("start", "--data", data, "--no-elevate")
 check(answer.get("code") == "game_running", "a second start while it runs is refused", answer)
 subprocess.run(["powershell", "-NoProfile", "-Command",
@@ -103,8 +123,15 @@ subprocess.run(["powershell", "-NoProfile", "-Command",
                capture_output=True)
 time.sleep(1)
 
+# A Steam installation is started plainly, without the official launcher.
+core("set", "--data", data, "--game", steam, "--official", "")
+answer = core("start", "--data", data, "--wait", "--no-elevate", "--args", "--seconds 2", *quiet)
+check(answer.get("code") == "ok" and not answer.get("parent_pid"), "a Steam installation needs no official launcher", answer)
+core("set", "--data", data, "--game", game, "--official", official)
+
 # The launcher's own log records each start.
 record = (data / "launcher.log").read_text(encoding="utf-8") if (data / "launcher.log").is_file() else ""
+check("1.10.0" in record, "the newest version's Games.exe was the parent", record[-300:])
 check("exited_early" in record and "Endfield.exe" in record and "efmi_vk_inject.dll" in record,
       "the launcher's log records the starts and how they ended", record[-300:])
 

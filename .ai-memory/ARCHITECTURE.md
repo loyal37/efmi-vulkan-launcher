@@ -16,12 +16,12 @@ The layer reads `efmi_vk.cfg` from its own folder; `m2_mods = auto` takes the fi
 
 | Part | What |
 | --- | --- |
-| `core/src/launch.*` | `launch()`: CreateProcessW suspended, per DLL a remote thread running LoadLibraryW, ResumeThread; any failure ends the process that never ran. `process_running()`. |
-| `core/src/settings.*` | `data\settings.json` (`game_path`, `efmi_path`, `layer_path`, `prefilled`), the XXMI prefill, `launcher_status()` (what the page shows). |
+| `core/src/launch.*` | `launch()`: an optional suspended parent (`Games.exe`), CreateProcessW suspended (as that parent's child), per DLL a remote thread running LoadLibraryW, ResumeThread, then the watch (settle time, the window with a parent); any failure ends the process that never ran, and the parent is always ended. `process_running()`. |
+| `core/src/settings.*` | `data\settings.json` (`game_path`, `efmi_path`, `layer_path`, `launcher_path`, `prefilled`), `find_games_exe()`, the XXMI prefill, `launcher_status()` (what the page shows). |
 | `core/src/install.*` | The archive read whole in memory (miniz), checked, then written; the install record `efvl-install.json` (version from the archive's name); `set_layer_mods()` writes `m2_mods`. |
 | `core/src/update.*` | WinHTTP GET of the latest release (`kReleaseApi`, or `--api` / `EFVL_RELEASE_API` for the checks), the asset `EFMI-Vulkan-X.Y.Z.zip` downloaded into `data\downloads`, installed through `action_install`, then removed. |
 | `core/src/actions.*` | What the command line and the window both call: prefill, set paths, install, start. Every answer is JSON with `ok` and `code`. |
 | `core/src/main.cpp` | `efvl_core.exe`. Starts itself elevated when the program needs it; the elevated copy answers through `--result`. |
 | `shell/src/main.cpp` | The window: WebView2 on the virtual host `efvl.example` mapped to `ui\`, requests `{id, cmd}` from the page (`state`, `browse`, `install_file`, `check_update`, `update`, `start`), native folder and file dialogs, `--screenshot`, `--eval` (a check's script run in the page). A start runs `efvl_core.exe start` hidden. |
 | `ui/` | `index.html`, `app.css`, `app.js`; `strings.zh-CN.json` holds every Chinese text, error messages by code, and the shell's native message. |
-| `scripts/build.py`, `scripts/check_text.py`, `tests/check_core.py`, `tests/check_update.py`, `tests/check_ui.py` | Build and checks. |
+| `scripts/build.py`, `scripts/check_text.py`, `tests/check_core.py`, `tests/check_inject.py`, `tests/check_update.py`, `tests/check_ui.py` | Build and checks. |

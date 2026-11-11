@@ -13,9 +13,10 @@ Work in progress. What is verified, and where (build, a sandbox program, the gam
 
 - One button starts the game: the process is created suspended, `efmi_vk_inject.dll` is loaded with a
   plain remote `LoadLibraryW`, and the process is resumed. Nothing is hidden and nothing works against
-  the anti-cheat. Using it is at your own risk for your account.
-- Settings: the game folder, the EFMI folder, and the folder EFMI Vulkan is installed in. On the first
-  run the first two are read from the XXMI Launcher's configuration, which is never written.
+  the anti-cheat. Outside Steam the game is created as the child of the official launcher's `Games.exe`
+  (created suspended, never run), as the XXMI Launcher starts it. Using it is at your own risk for your account.
+- Settings: the game folder, the official launcher's folder, the EFMI folder, and the folder EFMI Vulkan is installed in. On the first
+  run the first three are read from the XXMI Launcher's configuration, which is never written.
 - Installs and updates EFMI Vulkan from its GitHub releases or from a local release archive. An archive
   is checked whole before installed files are replaced.
 - Only the core is elevated, and only when the game needs it; the window is not.
@@ -39,6 +40,7 @@ Windows x64, the MSVC build tools, Python 3.12, and under `F:\vulkan` (or `EFVL_
 python scripts\build.py
 python scripts\check_text.py
 python tests\check_core.py
+python tests\check_inject.py
 python tests\check_update.py
 python tests\check_ui.py
 ```

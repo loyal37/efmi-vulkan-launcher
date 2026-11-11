@@ -4,6 +4,7 @@
   "setup": "完成设置",
   "settings": "设置",
   "game": "游戏",
+  "official": "官方启动器",
   "efmi": "EFMI",
   "layer": "EFMI Vulkan",
   "choose": "选择",
@@ -45,6 +46,9 @@
     "network_failed": "网络连接失败",
     "release_invalid": "未找到可用版本",
     "exited_early": "游戏启动后立即退出",
+    "launcher_not_set": "请先选择官方启动器文件夹",
+    "parent_not_found": "找不到官方启动器",
+    "parent_failed": "游戏启动失败",
     "unknown": "出错了"
   }
 }

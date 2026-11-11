@@ -17,6 +17,8 @@ json LaunchResult::to_json() const
         j["detail"] = detail;
     if (pid)
         j["pid"] = pid;
+    if (parent_pid)
+        j["parent_pid"] = parent_pid;
     if (exited)
         j["exit_code"] = exit_code;
     return j;
@@ -161,6 +163,42 @@ bool load_library(HANDLE process, const fs::path& dll, LaunchResult& result)
     return ok;
 }
 
+// The suspended parent: ended, never resumed, however the start goes.
+struct Parent {
+    HANDLE process = nullptr;
+    ~Parent()
+    {
+        if (process) {
+            TerminateProcess(process, 0);
+            CloseHandle(process);
+        }
+    }
+};
+
+struct WindowSearch {
+    DWORD pid;
+    bool found;
+};
+
+BOOL CALLBACK window_of(HWND window, LPARAM param)
+{
+    WindowSearch* search = reinterpret_cast<WindowSearch*>(param);
+    DWORD pid = 0;
+    GetWindowThreadProcessId(window, &pid);
+    if (pid == search->pid && IsWindowVisible(window)) {
+        search->found = true;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+bool has_window(DWORD pid)
+{
+    WindowSearch search = {pid, false};
+    EnumWindows(window_of, reinterpret_cast<LPARAM>(&search));
+    return search.found;
+}
+
 } // namespace
 
 LaunchResult launch(const LaunchRequest& request)
@@ -188,13 +226,52 @@ LaunchResult launch(const LaunchRequest& request)
     if (!request.env.empty())
         env = environment_block(request.env);
 
-    STARTUPINFOW startup = {};
-    startup.cb = sizeof(startup);
+    Parent parent;
+    std::vector<char> attributes;
+    STARTUPINFOEXW startup = {};
+    startup.StartupInfo.cb = sizeof(STARTUPINFOW);
+    DWORD extended = 0;
+    if (!request.parent_exe.empty()) {
+        if (!fs::is_regular_file(request.parent_exe, ec)) {
+            result.code = "parent_not_found";
+            result.detail = text_of(request.parent_exe);
+            return result;
+        }
+        std::wstring parent_command = quote_argument(request.parent_exe.wstring());
+        STARTUPINFOW parent_startup = {};
+        parent_startup.cb = sizeof(parent_startup);
+        PROCESS_INFORMATION made = {};
+        if (!CreateProcessW(request.parent_exe.c_str(), &parent_command[0], nullptr, nullptr, FALSE,
+                            CREATE_SUSPENDED | CREATE_NO_WINDOW, nullptr, request.parent_exe.parent_path().c_str(),
+                            &parent_startup, &made)) {
+            result.error = GetLastError();
+            result.code = result.error == ERROR_ELEVATION_REQUIRED ? "elevation_required" : "parent_failed";
+            result.detail = "CreateProcessW " + text_of(request.parent_exe);
+            return result;
+        }
+        CloseHandle(made.hThread);
+        parent.process = made.hProcess;
+        result.parent_pid = made.dwProcessId;
+        SIZE_T size = 0;
+        InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
+        attributes.resize(size);
+        startup.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attributes.data());
+        if (!InitializeProcThreadAttributeList(startup.lpAttributeList, 1, 0, &size) ||
+            !UpdateProcThreadAttribute(startup.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, &parent.process,
+                                       sizeof(HANDLE), nullptr, nullptr)) {
+            result.error = GetLastError();
+            result.code = "parent_failed";
+            result.detail = "UpdateProcThreadAttribute";
+            return result;
+        }
+        startup.StartupInfo.cb = sizeof(startup);
+        extended = EXTENDED_STARTUPINFO_PRESENT;
+    }
     PROCESS_INFORMATION process = {};
     if (!CreateProcessW(request.exe.c_str(), &command[0], nullptr, nullptr, FALSE,
                         // No console shared with the core: its one line of JSON stays alone on its output.
-                        CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | DETACHED_PROCESS, env.empty() ? nullptr : env.data(), cwd.c_str(),
-                        &startup, &process)) {
+                        CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | DETACHED_PROCESS | extended, env.empty() ? nullptr : env.data(), cwd.c_str(),
+                        &startup.StartupInfo, &process)) {
         result.error = GetLastError();
         result.code = result.error == ERROR_ELEVATION_REQUIRED ? "elevation_required" : "create_failed";
         result.detail = "CreateProcessW";
@@ -228,9 +305,22 @@ LaunchResult launch(const LaunchRequest& request)
     if (request.wait) {
         WaitForSingleObject(process.hProcess, INFINITE);
         result.exited = GetExitCodeProcess(process.hProcess, &result.exit_code) != 0;
-    } else if (request.settle_ms && WaitForSingleObject(process.hProcess, request.settle_ms) == WAIT_OBJECT_0) {
-        result.exited = GetExitCodeProcess(process.hProcess, &result.exit_code) != 0;
-        result.code = "exited_early";
+    } else {
+        // Watched until it has settled and, with a parent, until it shows a window (or the time is up):
+        // the parent stays for that long, as XXMI keeps it.
+        const ULONGLONG begun = GetTickCount64();
+        for (;;) {
+            const ULONGLONG elapsed = GetTickCount64() - begun;
+            const bool settled = elapsed >= request.settle_ms;
+            const bool shown = !parent.process || elapsed >= request.window_ms || has_window(process.dwProcessId);
+            if (settled && shown)
+                break;
+            if (WaitForSingleObject(process.hProcess, 100) == WAIT_OBJECT_0) {
+                result.exited = GetExitCodeProcess(process.hProcess, &result.exit_code) != 0;
+                result.code = "exited_early";
+                break;
+            }
+        }
     }
     CloseHandle(process.hThread);
     CloseHandle(process.hProcess);

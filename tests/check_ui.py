@@ -90,7 +90,11 @@ game.mkdir(parents=True)
 (efmi / "Mods").mkdir(parents=True)
 shutil.copytree(INSTALLED_CORE, efmi / "Core" / "EFMI")
 shutil.copy2(SANDBOX, game / "Endfield.exe")
-subprocess.run([str(CORE), "set", "--data", str(data), "--game", str(game), "--efmi", str(efmi), "--layer", str(layer)],
+official = work / "official"
+(official / "1.0.0").mkdir(parents=True)
+shutil.copy2(Path(os.environ["SystemRoot"]) / "System32" / "where.exe", official / "1.0.0" / "Games.exe")
+subprocess.run([str(CORE), "set", "--data", str(data), "--game", str(game), "--efmi", str(efmi), "--layer", str(layer),
+                "--official", str(official)],
                capture_output=True, check=True)
 # The prefill would look for the real XXMI configuration: these paths are set already, and it is marked done.
 settings = json.loads((data / "settings.json").read_text(encoding="utf-8"))
@@ -142,8 +146,8 @@ r = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else {}
 check(done.returncode == 0 and r and "error" not in r, "the window ran the script to its end", r.get("error", done.returncode))
 check(r.get("first_start") == strings["setup"] and r.get("first_version") == "", "without the layer the main button leads to the settings", r)
 check(r.get("setup_opens") is True, "and opens them")
-check(r.get("labels") == [strings["game"], strings["efmi"], strings["layer"]], "the settings name three paths", r.get("labels"))
-check([Path(v) for v in r.get("values", [])] == [game, efmi, layer], "and show the saved ones", r.get("values"))
+check(r.get("labels") == [strings["game"], strings["official"], strings["efmi"], strings["layer"]], "the settings name four paths", r.get("labels"))
+check([Path(v) for v in r.get("values", [])] == [game, official, efmi, layer], "and show the saved ones", r.get("values"))
 check(r.get("first_state") == strings["not_installed"] and r.get("first_install") == strings["install"], "the layer is shown as not installed", r)
 check(r.get("install_toast") == strings["done"], "the install button installs from the network", r.get("install_toast"))
 check(r.get("state") == VERSION and r.get("version") == VERSION and r.get("install") == strings["update"], "the installed version is shown", r)

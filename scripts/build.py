@@ -71,7 +71,7 @@ def build_core(vcvars: str) -> str:
                              os.path.join("core", "src", "main.cpp")] + core_inputs() +
            ["/Fe:" + out, "/link", "/NOLOGO", "/DEBUG", "/PDB:" + obj + "efvl_core.pdb", "/SUBSYSTEM:CONSOLE",
             "/MANIFESTUAC:level='asInvoker' uiAccess='false'",
-            "winhttp.lib", "bcrypt.lib", "shell32.lib", "ole32.lib", "advapi32.lib", "psapi.lib", "uuid.lib"])
+            "winhttp.lib", "bcrypt.lib", "shell32.lib", "ole32.lib", "advapi32.lib", "psapi.lib", "uuid.lib", "user32.lib"])
     return out
 
 

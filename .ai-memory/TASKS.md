@@ -8,11 +8,11 @@
 - [x] Shell and main screen built and shown.
 - [x] The user accepted the main screen (2026-11-11).
 - [x] A check that clicks the page's buttons (`tests/check_ui.py`).
-- [ ] The elevated path tried with a program that needs it.
+- [ ] The elevated path: `python tests/check_inject.py --elevated` (one UAC prompt; the user or the agent with the user present).
+- [x] The official launcher as the game's parent (D-011), early exit told, launcher.log (D-012).
 
 ## Waiting for the user
 
-- [ ] O-2: the official launcher's `Games.exe` as the game's parent, as XXMI does?
 - [ ] Background: the official launcher's wallpaper is fetched by it from Hypergryph's servers, not kept as a file here. Fetch it the same way at run time, or let the user choose a picture? Never shipped in the repository.
 - [ ] The first real start of the game (the user's click, the user's account).
 

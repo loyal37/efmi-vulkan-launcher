@@ -73,8 +73,12 @@ state, _ = core("status", "--data", data)
 check(state.get("game_path") == "" and state.get("ready") is False, "a new data folder has no paths", state)
 xxmi = work / "xxmi" / "XXMI Launcher Config.json"
 xxmi.parent.mkdir()
+prefill_official = work / "prefill official"
+(prefill_official / "1.6.0").mkdir(parents=True)
+shutil.copy2(Path(os.environ["SystemRoot"]) / "System32" / "where.exe", prefill_official / "1.6.0" / "Games.exe")
 xxmi.write_text(json.dumps({"Importers": {"EFMI": {"Importer": {
-    "importer_folder": efmi.as_posix(), "game_folder": game.as_posix()}}}}), encoding="utf-8")
+    "importer_folder": efmi.as_posix(), "game_folder": game.as_posix(), "launcher_folder": str(prefill_official)}}}}),
+    encoding="utf-8")
 xxmi_before = xxmi.read_bytes()
 answer, code = core("prefill", "--data", data, "--xxmi-config", xxmi)
 check(code == 0 and answer.get("filled") is True, "prefill takes both paths from the XXMI configuration", answer)
@@ -82,6 +86,8 @@ state, _ = core("status", "--data", data)
 check(Path(state.get("game_path", "")) == game and Path(state.get("efmi_path", "")) == efmi,
       "the prefilled paths are read back", state)
 check(state.get("game_ok") and state.get("efmi_ok"), "both prefilled paths are usable", state)
+check(Path(state.get("launcher_path", "")) == prefill_official and state.get("launcher_ok"),
+      "the official launcher's folder is prefilled too", state)
 check(xxmi.read_bytes() == xxmi_before, "the XXMI configuration is unchanged")
 
 # Paths set by hand are saved and read back; an unusable one is told.
@@ -90,6 +96,10 @@ state, _ = core("status", "--data", data)
 check(Path(state["game_path"]) == work / "nowhere" and state["game_ok"] is False, "a folder without the game is not usable", state)
 check(Path(state["layer_path"]) == layer, "the layer's folder is a setting", state)
 check(Path(state["efmi_path"]) == efmi, "a path not named keeps its value", state)
+official = work / "official"
+(official / "1.0.0").mkdir(parents=True)
+shutil.copy2(Path(os.environ["SystemRoot"]) / "System32" / "where.exe", official / "1.0.0" / "Games.exe")
+core("set", "--data", data, "--official", official)
 answer, code = core("start", "--data", data, "--no-elevate")
 check(code == 1 and answer.get("code") == "game_not_set", "no start without the game", answer)
 core("set", "--data", data, "--game", game)

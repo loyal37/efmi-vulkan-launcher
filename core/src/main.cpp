@@ -3,7 +3,7 @@
 //
 //   efvl_core status   [--data DIR]
 //   efvl_core prefill  [--data DIR] [--xxmi-config FILE]
-//   efvl_core set      [--data DIR] [--game DIR] [--efmi DIR] [--layer DIR]
+//   efvl_core set      [--data DIR] [--game DIR] [--efmi DIR] [--layer DIR] [--official DIR]
 //   efvl_core install  [--data DIR] --archive FILE
 //   efvl_core check-update [--data DIR] [--api URL]
 //   efvl_core update   [--data DIR] [--api URL]
@@ -71,6 +71,7 @@ Args parse(int argc, wchar_t** argv)
         else if (key == L"--game") a.paths["game_path"] = narrow(value());
         else if (key == L"--efmi") a.paths["efmi_path"] = narrow(value());
         else if (key == L"--layer") a.paths["layer_path"] = narrow(value());
+        else if (key == L"--official") a.paths["launcher_path"] = narrow(value());
         else if (key == L"--env") {
             const std::wstring pair = value();
             const size_t eq = pair.find(L'=');

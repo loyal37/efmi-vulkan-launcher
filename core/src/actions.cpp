@@ -29,7 +29,8 @@ void log_start(const fs::path& data, const LaunchRequest& request, const json& a
     if (text.size() > (1u << 20))
         text.erase(0, text.size() - (1u << 19));
     text += std::string(stamp) + " start " + text_of(request.exe) + " with " +
-            (request.dlls.empty() ? std::string("no DLL") : text_of(request.dlls.front())) + ": " + dump(answer) + "\n";
+            (request.dlls.empty() ? std::string("no DLL") : text_of(request.dlls.front())) +
+            (request.parent_exe.empty() ? std::string() : " as a child of " + text_of(request.parent_exe)) + ": " + dump(answer) + "\n";
     write_file(data / L"launcher.log", text);
 }
 
@@ -68,6 +69,7 @@ json action_set_paths(const fs::path& data, const json& paths)
     take("game_path", s.game_path);
     take("efmi_path", s.efmi_path);
     take("layer_path", s.layer_path);
+    take("launcher_path", s.launcher_path);
     if (!save_settings(data, s))
         return fail("settings_write_failed");
     sync_layer(s);
@@ -90,6 +92,13 @@ json action_start(const fs::path& data, bool wait, const std::wstring& args,
     const fs::path game = path_of(s.game_path), efmi = path_of(s.efmi_path), layer = layer_dir(s);
     if (!game_folder_valid(game))
         return fail("game_not_set");
+    // Outside Steam the game is started as the official launcher's child, as XXMI starts it.
+    fs::path parent;
+    if (needs_official_launcher(game)) {
+        parent = find_games_exe(official_launcher_dir(s));
+        if (parent.empty())
+            return fail("launcher_not_set");
+    }
     if (!efmi_folder_valid(efmi))
         return fail("efmi_not_set");
     std::error_code ec;
@@ -107,6 +116,7 @@ json action_start(const fs::path& data, bool wait, const std::wstring& args,
     request.env = env;
     request.wait = wait;
     request.settle_ms = settle_ms;
+    request.parent_exe = parent;
     const json answer = launch(request).to_json();
     log_start(data, request, answer);
     return answer;

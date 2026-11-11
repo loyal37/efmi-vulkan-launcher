@@ -43,7 +43,14 @@ The launcher has one path, Vulkan. No DX11 entry or option anywhere, and the XXM
 
 Update, install and start flows may follow XXMI Launcher's (`SpectrumQT/XXMI-Launcher`, public): how the latest version is found and downloaded, checked and put in place, backup and rollback, the record of what is installed, finding the game folder, the order and timeouts of a start, how errors are told. Its repository shows no licence, so until one is confirmed its behaviour is the reference and its code and assets are not copied. The interface is plainer than XXMI's; the reference is the logic.
 
+## D-011 The official launcher's Games.exe as the game's parent (user, 2026-11-11)
+
+The user, asked about O-2: "do it XXMI's way, most likely there is no problem". Outside Steam (no `steamapps` in the game's path) the core creates `<official launcher>\<newest version>\Games.exe` with `CREATE_SUSPENDED | CREATE_NO_WINDOW`, creates the game as its child (`PROC_THREAD_ATTRIBUTE_PARENT_PROCESS`), and ends Games.exe, which never ran, once the game shows a window or after 120 s. The official launcher's folder is a setting (`launcher_path`), prefilled from XXMI's `launcher_folder`, else looked for two folders above the game's. Differences from XXMI, on purpose: a Games.exe that already runs is left alone (XXMI ends it first), and the game is created suspended for the injection (XXMI injects into the running process).
+
+## D-012 What a start tells (2026-11-11)
+
+After the resume the game is watched for 5 s (`--settle`): one that ends within it, or before its window with a parent, is `exited_early` with its exit code. Every start is one line in `data\launcher.log`. The game's process shares no console with the core.
+
 ## Open, the user's to decide
 
-- O-1 (DX11) is decided: D-009.
-- **O-2 The official launcher as the game's parent.** XXMI does not start `Endfield.exe` plainly: for installations outside Steam it starts the official launcher's `Games.exe` suspended and without a window, creates the game as that process's child, and ends `Games.exe` once the game runs (its source calls this the launcher requirement of the game; XXMI option `skip_platform_game_launcher`). Whether the game refuses a plain start is not known here: the agent does not start the game. Doing as XXMI does would present the game with a parent that is not the real one; under the rule "if the game blocks, stop and report" this is the user's decision, and it is not implemented.
+- Nothing open on the start. Set aside by the user (2026-11-11): the wallpaper, releases and the launcher's own update.
